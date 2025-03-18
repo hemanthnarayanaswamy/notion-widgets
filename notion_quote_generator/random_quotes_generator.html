@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notion Random Quote</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400&family=Roboto+Mono:wght@300;400&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 0;
+        }
+        .card {
+            width: 80%;
+            max-width: 700px;
+        }
+        .card-body {
+            padding: 20px;
+        }
+        .quote {
+            font-size: 1.5rem;
+        }
+        .content {
+            font-weight: 200;
+        }
+        cite {
+            font-size: 80%;
+            font-weight: 500;
+            font-style: normal;
+        }
+        .mono { font-family: 'Roboto Mono', monospace; }
+        .sans { font-family: 'Roboto', sans-serif; }
+        .serif { font-family: 'Noto Serif JP', serif; }
+        .settings {
+            text-align: center;
+            background-color: #eee;
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .settings:hover { opacity: 1; }
+        .settings button {
+            border: none;
+            background: none;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .settings button:hover { opacity: 0.6; }
+        .settings small { font-size: 0.8rem; float: left; }
+        .light { color: rgba(0, 0, 0, 0.9); background-color: #ffffff !important; }
+        .dark { color: rgba(255, 255, 255, 0.9); background-color: rgb(25, 25, 25) !important; }
+        .dash { opacity: 0.2; }
+        hr { border: none; border-bottom: 1px solid gray; opacity: 0.2; margin: 0 0 0.4rem; }
+    </style>
+</head>
+
+<body class="light">
+    <div class="settings">
+        <div class="action sans"><button id="shuffleBtn">Shuffle</button></div>
+        <hr>
+        <div class="size sans">
+            <button id="increaseSize">A+</button>
+            <button id="decreaseSize">A-</button>
+        </div>
+        <div class="modes sans">
+            <button data-mode="light">Light</button>
+            <button data-mode="dark">Dark</button>
+        </div>
+        <div class="fonts">
+            <button data-font="sans" class="sans">ag <br><small>Default</small></button>
+            <button data-font="serif" class="serif">ag <br><small>Serif</small></button>
+            <button data-font="mono" class="mono">ag <br><small>Mono</small></button>
+        </div>
+    </div>
+
+    <div class="quote mono">
+        <div class="card-body">
+            <blockquote>
+                <p class="content">Loading...</p>
+                <span class="dash">&horbar;</span> <cite></cite>
+            </blockquote>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const body = document.body;
+            const quoteText = document.querySelector(".content");
+            const authorText = document.querySelector("blockquote cite");
+            const shuffleBtn = document.getElementById("shuffleBtn");
+            const sizeButtons = document.querySelectorAll(".size button");
+            const modeButtons = document.querySelectorAll(".modes button");
+            const fontButtons = document.querySelectorAll(".fonts button");
+            const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
+
+            let fontSize = parseFloat(localStorage.getItem("size")) || 1.5;
+
+            /** Fetch a new quote from API */
+            async function fetchQuote() {
+                try {
+                    const response = await fetch("https://quoteslate.vercel.app/api/quotes/random");
+                    if (!response.ok) throw new Error("Failed to fetch quote");
+                    
+                    const data = await response.json();
+                    quoteText.textContent = data.quote;
+                    authorText.textContent = data.author;
+                } catch (error) {
+                    quoteText.textContent = "Oops! Unable to load quote.";
+                    console.error(error);
+                }
+            }
+
+            /** Fetch a quote from a custom file if provided */
+            async function fetchCustomQuote(fileUrl) {
+                try {
+                    const response = await fetch(fileUrl);
+                    if (!response.ok) throw new Error("Invalid quote source");
+
+                    const data = await response.json();
+                    if (data.length > 0) {
+                        const randomQuote = data[Math.floor(Math.random() * data.length)];
+                        quoteText.textContent = randomQuote.content;
+                        authorText.textContent = randomQuote.author;
+                    }
+                } catch (error) {
+                    quoteText.textContent = "Error loading custom quotes.";
+                    console.error(error);
+                }
+            }
+
+            /** Load quotes (API or custom file) */
+            function loadQuote() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const fileUrl = urlParams.get("f");
+
+                fileUrl ? fetchCustomQuote(fileUrl) : fetchQuote();
+            }
+
+            /** Change the font style */
+            function changeFont(font) {
+                document.querySelector(".quote").className = `quote ${font}`;
+                localStorage.setItem("font", font);
+            }
+
+            /** Change light/dark mode */
+            function changeMode(mode) {
+                body.className = mode;
+                localStorage.setItem("mode", mode);
+            }
+
+            /** Adjust font size */
+            function adjustFontSize(action) {
+                fontSize = action === "increase" ? fontSize + 0.1 : fontSize - 0.1;
+                fontSize = parseFloat(fontSize.toFixed(2));
+                document.querySelector(".quote").style.fontSize = `${fontSize}rem`;
+                localStorage.setItem("size", fontSize);
+            }
+
+            /** Restore user preferences */
+            function applySavedPreferences() {
+                changeFont(localStorage.getItem("font") || "sans");
+                changeMode(localStorage.getItem("mode") || (prefersDark.matches ? "dark" : "light"));
+                document.querySelector(".quote").style.fontSize = `${fontSize}rem`;
+            }
+
+            /** Handle system theme change */
+            function handleSystemThemeChange(event) {
+                if (!localStorage.getItem("mode")) {
+                    changeMode(event.matches ? "dark" : "light");
+                }
+            }
+
+            // Add event listeners
+            shuffleBtn.addEventListener("click", loadQuote);
+            sizeButtons.forEach(btn => btn.addEventListener("click", () => adjustFontSize(btn.id === "increaseSize" ? "increase" : "decrease")));
+            modeButtons.forEach(btn => btn.addEventListener("click", () => changeMode(btn.dataset.mode)));
+            fontButtons.forEach(btn => btn.addEventListener("click", () => changeFont(btn.dataset.font)));
+            prefersDark.addEventListener("change", handleSystemThemeChange);
+
+            // Initialize
+            applySavedPreferences();
+            loadQuote();
+        });
+    </script>
+</body>
+</html>
