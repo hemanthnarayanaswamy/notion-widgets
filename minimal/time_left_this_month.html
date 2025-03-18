@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Fjalla+One&display=swap" rel="stylesheet">
+
+    <title>Time Left in This Month</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: 'Fjalla One', sans-serif;
+            background-color: #fff;
+        }
+        .box {
+            display: inline-block;
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            min-width: 50px;
+        }
+        #days {
+            background-color: #0f4d4f;
+        }
+        #hours {
+            background-color: #4CAF50;
+        }
+        #minutes {
+            background-color: #76250b;
+        }
+        #seconds {
+            background-color: #bb7f0a;
+        }
+        h2 {
+            display: inline-block;
+            margin-right: 10px;
+            margin-block-start: 5px;
+        }
+        h3 {
+            text-align: center;
+        }
+        .small {
+            font-size: 15px;
+            font-weight: lighter;
+        }
+    </style>
+</head>
+<body>
+    
+    <div id="counter">
+        <h2>Time left in This Month</h2>
+        <h2 class="box" id="days"></h2>
+        <h2 class="box" id="hours"></h2>
+        <h2 class="box" id="minutes"></h2>
+        <h2 class="box" id="seconds"></h2>
+    </div>
+
+<script>
+    function showRemaining() {
+        let now = new Date();
+
+        // Get the total days in the current month
+        let daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate(); 
+        let daysLeft = daysInMonth - now.getDate();
+        let hoursLeft = 23 - now.getHours();
+        let minutesLeft = 59 - now.getMinutes();
+        let secondsLeft = 59 - now.getSeconds();
+
+        document.getElementById("days").innerHTML = daysLeft + "<br> <span class='small'> days</span>";
+        document.getElementById("hours").innerHTML = hoursLeft + "<br> <span class='small'> hours</span>";
+        document.getElementById("minutes").innerHTML = minutesLeft + "<br> <span class='small'> mins</span>";
+        document.getElementById("seconds").innerHTML = secondsLeft + "<br> <span class='small'> secs</span>";
+    }
+
+    setInterval(showRemaining, 1000); // Update every second
+    showRemaining(); // Run once immediately
+</script>
+
+</body>
+</html>
